@@ -1,0 +1,7 @@
+model,task,metric,score,file
+Qwen__Qwen2.5-7B-Instruct,aime24,"exact_match,none",0.03333333333333333,results/Qwen_Qwen2.5-7B-Instruct/Qwen__Qwen2.5-7B-Instruct/results_2025-10-23T13-28-00.196958.json
+deepseek-ai__DeepSeek-R1-Distill-Qwen-7B,aime24,"exact_match,none",0.0,results/deepseek-ai_DeepSeek-R1-Distill-Qwen-7B/deepseek-ai__DeepSeek-R1-Distill-Qwen-7B/results_2025-10-23T14-15-03.115174.json
+meta-llama__Llama-3.1-8B-Instruct,aime24,"exact_match,none",0.0,results/meta-llama_Llama-3.1-8B-Instruct/meta-llama__Llama-3.1-8B-Instruct/results_2025-10-23T13-09-42.403120.json
+Qwen__Qwen2.5-7B-Instruct,ifeval,"prompt_level_strict_acc,none",0.65,results/Qwen_Qwen2.5-7B-Instruct/Qwen__Qwen2.5-7B-Instruct/results_2025-10-23T13-28-00.196958.json
+deepseek-ai__DeepSeek-R1-Distill-Qwen-7B,ifeval,"prompt_level_strict_acc,none",0.19,results/deepseek-ai_DeepSeek-R1-Distill-Qwen-7B/deepseek-ai__DeepSeek-R1-Distill-Qwen-7B/results_2025-10-23T14-15-03.115174.json
+meta-llama__Llama-3.1-8B-Instruct,ifeval,"prompt_level_strict_acc,none",0.68,results/meta-llama_Llama-3.1-8B-Instruct/meta-llama__Llama-3.1-8B-Instruct/results_2025-10-23T13-09-42.403120.json

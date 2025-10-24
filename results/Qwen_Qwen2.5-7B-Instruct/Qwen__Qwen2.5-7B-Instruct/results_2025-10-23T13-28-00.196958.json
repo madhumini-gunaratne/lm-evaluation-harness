@@ -1,0 +1,204 @@
+{
+  "results": {
+    "aime24": {
+      "alias": "aime24",
+      "exact_match,none": 0.03333333333333333,
+      "exact_match_stderr,none": 0.03333333333333331
+    },
+    "ifeval": {
+      "alias": "ifeval",
+      "prompt_level_strict_acc,none": 0.65,
+      "prompt_level_strict_acc_stderr,none": 0.0479372485441102,
+      "inst_level_strict_acc,none": 0.7484662576687117,
+      "inst_level_strict_acc_stderr,none": "N/A",
+      "prompt_level_loose_acc,none": 0.68,
+      "prompt_level_loose_acc_stderr,none": 0.046882617226215034,
+      "inst_level_loose_acc,none": 0.7730061349693251,
+      "inst_level_loose_acc_stderr,none": "N/A"
+    }
+  },
+  "group_subtasks": {
+    "aime24": [],
+    "ifeval": []
+  },
+  "configs": {
+    "aime24": {
+      "task": "aime24",
+      "tag": [
+        "math_word_problems"
+      ],
+      "dataset_path": "Maxwell-Jia/AIME_2024",
+      "training_split": "train",
+      "test_split": "train",
+      "fewshot_split": "train",
+      "doc_to_text": "Question: {{Problem}}\nAnswer:",
+      "doc_to_target": "{{Answer}}",
+      "unsafe_code": false,
+      "process_results": "def process_results(doc: dict, results: List[str]) -> Dict[str, int]:\n    retval = 0\n    response = results[0]\n\n    # Try to extract answer from $...$ format first\n    indices = [pos for pos, char in enumerate(response) if char == \"$\"]\n    if len(indices) <= 1:\n        answer = response\n    else:\n        answer = response[indices[0] + 1 : indices[-1]]\n\n    # Extract from \\\\boxed{} if present\n    boxed_answer = last_boxed_only_string(response)\n    if boxed_answer is not None:\n        try:\n            boxed_content = remove_boxed(boxed_answer)\n            if boxed_content is not None:\n                answer = boxed_content\n        except (AssertionError, IndexError):\n            pass\n\n    # Check if answer matches target\n    answer_key = next(k for k in doc.keys() if k.lower() == \"answer\")\n    target = str(doc[answer_key])\n    if is_equiv(answer, target):\n        retval = 1\n\n    return {\"exact_match\": retval}\n",
+      "description": "",
+      "target_delimiter": " ",
+      "fewshot_delimiter": "\n\n",
+      "num_fewshot": 0,
+      "metric_list": [
+        {
+          "metric": "exact_match",
+          "aggregation": "mean",
+          "higher_is_better": true
+        }
+      ],
+      "output_type": "generate_until",
+      "generation_kwargs": {
+        "until": [
+          "Question:",
+          "</s>",
+          "<|im_end|>",
+          "<|eot_id|>"
+        ],
+        "do_sample": false,
+        "temperature": 0.0,
+        "max_gen_toks": 512
+      },
+      "repeats": 1,
+      "should_decontaminate": false,
+      "metadata": {
+        "version": 0.0,
+        "pretrained": "Qwen/Qwen2.5-7B-Instruct",
+        "dtype": "float16"
+      }
+    },
+    "ifeval": {
+      "task": "ifeval",
+      "dataset_path": "google/IFEval",
+      "test_split": "train",
+      "doc_to_text": "prompt",
+      "doc_to_target": 0,
+      "unsafe_code": false,
+      "process_results": "def process_results(doc, results):\n    inp = InputExample(\n        key=doc[\"key\"],\n        instruction_id_list=doc[\"instruction_id_list\"],\n        prompt=doc[\"prompt\"],\n        kwargs=doc[\"kwargs\"],\n    )\n    response = results[0]\n\n    out_strict = test_instruction_following_strict(inp, response)\n    out_loose = test_instruction_following_loose(inp, response)\n\n    return {\n        \"prompt_level_strict_acc\": out_strict.follow_all_instructions,\n        \"inst_level_strict_acc\": out_strict.follow_instruction_list,\n        \"prompt_level_loose_acc\": out_loose.follow_all_instructions,\n        \"inst_level_loose_acc\": out_loose.follow_instruction_list,\n    }\n",
+      "description": "",
+      "target_delimiter": " ",
+      "fewshot_delimiter": "\n\n",
+      "num_fewshot": 0,
+      "metric_list": [
+        {
+          "metric": "prompt_level_strict_acc",
+          "aggregation": "mean",
+          "higher_is_better": true
+        },
+        {
+          "metric": "inst_level_strict_acc",
+          "aggregation": "def agg_inst_level_acc(items):\n    flat_items = [item for sublist in items for item in sublist]\n    inst_level_acc = sum(flat_items) / len(flat_items)\n    return inst_level_acc\n",
+          "higher_is_better": true
+        },
+        {
+          "metric": "prompt_level_loose_acc",
+          "aggregation": "mean",
+          "higher_is_better": true
+        },
+        {
+          "metric": "inst_level_loose_acc",
+          "aggregation": "def agg_inst_level_acc(items):\n    flat_items = [item for sublist in items for item in sublist]\n    inst_level_acc = sum(flat_items) / len(flat_items)\n    return inst_level_acc\n",
+          "higher_is_better": true
+        }
+      ],
+      "output_type": "generate_until",
+      "generation_kwargs": {
+        "until": [],
+        "do_sample": false,
+        "temperature": 0.0,
+        "max_gen_toks": 512
+      },
+      "repeats": 1,
+      "should_decontaminate": false,
+      "metadata": {
+        "version": 4.0,
+        "pretrained": "Qwen/Qwen2.5-7B-Instruct",
+        "dtype": "float16"
+      }
+    }
+  },
+  "versions": {
+    "aime24": 0.0,
+    "ifeval": 4.0
+  },
+  "n-shot": {
+    "aime24": 0,
+    "ifeval": 0
+  },
+  "higher_is_better": {
+    "aime24": {
+      "exact_match": true
+    },
+    "ifeval": {
+      "prompt_level_strict_acc": true,
+      "inst_level_strict_acc": true,
+      "prompt_level_loose_acc": true,
+      "inst_level_loose_acc": true
+    }
+  },
+  "n-samples": {
+    "ifeval": {
+      "original": 541,
+      "effective": 100
+    },
+    "aime24": {
+      "original": 30,
+      "effective": 30
+    }
+  },
+  "config": {
+    "model": "hf",
+    "model_args": "pretrained=Qwen/Qwen2.5-7B-Instruct,dtype=float16",
+    "model_num_parameters": 7615616512,
+    "model_dtype": "torch.float16",
+    "model_revision": "main",
+    "model_sha": "a09a35458c702b33eeacc393d103063234e8bc28",
+    "batch_size": "auto:8",
+    "batch_sizes": [],
+    "device": "cuda:0",
+    "use_cache": null,
+    "limit": 100.0,
+    "bootstrap_iters": 100000,
+    "gen_kwargs": {
+      "max_gen_toks": 512
+    },
+    "random_seed": 0,
+    "numpy_seed": 1234,
+    "torch_seed": 1234,
+    "fewshot_seed": 1234
+  },
+  "git_hash": "e916aa4",
+  "date": 1761250191.108242,
+  "pretty_env_info": "PyTorch version: 2.4.0+cu121\nIs debug build: False\nCUDA used to build PyTorch: 12.1\nROCM used to build PyTorch: N/A\n\nOS: Ubuntu 22.04.5 LTS (x86_64)\nGCC version: (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nClang version: Could not collect\nCMake version: version 3.30.1\nLibc version: glibc-2.35\n\nPython version: 3.11.7 (main, Dec 15 2023, 18:12:31) [GCC 11.2.0] (64-bit runtime)\nPython platform: Linux-6.5.0-41-generic-x86_64-with-glibc2.35\nIs CUDA available: True\nCUDA runtime version: 12.2.91\nCUDA_MODULE_LOADING set to: LAZY\nGPU models and configuration: GPU 0: NVIDIA RTX A6000\nNvidia driver version: 560.35.05\ncuDNN version: Probably one of the following:\n/usr/lib/x86_64-linux-gnu/libcudnn.so.8.9.7\n/usr/lib/x86_64-linux-gnu/libcudnn.so.9.8.0\n/usr/lib/x86_64-linux-gnu/libcudnn_adv.so.9.8.0\n/usr/lib/x86_64-linux-gnu/libcudnn_adv_infer.so.8.9.7\n/usr/lib/x86_64-linux-gnu/libcudnn_adv_train.so.8.9.7\n/usr/lib/x86_64-linux-gnu/libcudnn_cnn.so.9.8.0\n/usr/lib/x86_64-linux-gnu/libcudnn_cnn_infer.so.8.9.7\n/usr/lib/x86_64-linux-gnu/libcudnn_cnn_train.so.8.9.7\n/usr/lib/x86_64-linux-gnu/libcudnn_engines_precompiled.so.9.8.0\n/usr/lib/x86_64-linux-gnu/libcudnn_engines_runtime_compiled.so.9.8.0\n/usr/lib/x86_64-linux-gnu/libcudnn_graph.so.9.8.0\n/usr/lib/x86_64-linux-gnu/libcudnn_heuristic.so.9.8.0\n/usr/lib/x86_64-linux-gnu/libcudnn_ops.so.9.8.0\n/usr/lib/x86_64-linux-gnu/libcudnn_ops_infer.so.8.9.7\n/usr/lib/x86_64-linux-gnu/libcudnn_ops_train.so.8.9.7\nHIP runtime version: N/A\nMIOpen runtime version: N/A\nIs XNNPACK available: True\n\nCPU:\nArchitecture:                       x86_64\nCPU op-mode(s):                     32-bit, 64-bit\nAddress sizes:                      46 bits physical, 48 bits virtual\nByte Order:                         Little Endian\nCPU(s):                             16\nOn-line CPU(s) list:                0-15\nVendor ID:                          GenuineIntel\nModel name:                         Intel(R) Xeon(R) W-2145 CPU @ 3.70GHz\nCPU family:                         6\nModel:                              85\nThread(s) per core:                 2\nCore(s) per socket:                 8\nSocket(s):                          1\nStepping:                           4\nCPU max MHz:                        4500.0000\nCPU min MHz:                        1200.0000\nBogoMIPS:                           7399.70\nFlags:                              fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti intel_ppin ssbd mba ibrs ibpb stibp tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts hwp hwp_act_window hwp_epp hwp_pkg_req vnmi md_clear flush_l1d arch_capabilities\nVirtualization:                     VT-x\nL1d cache:                          256 KiB (8 instances)\nL1i cache:                          256 KiB (8 instances)\nL2 cache:                           8 MiB (8 instances)\nL3 cache:                           11 MiB (1 instance)\nNUMA node(s):                       1\nNUMA node0 CPU(s):                  0-15\nVulnerability Gather data sampling: Mitigation; Microcode\nVulnerability Itlb multihit:        KVM: Mitigation: VMX disabled\nVulnerability L1tf:                 Mitigation; PTE Inversion; VMX conditional cache flushes, SMT vulnerable\nVulnerability Mds:                  Mitigation; Clear CPU buffers; SMT vulnerable\nVulnerability Meltdown:             Mitigation; PTI\nVulnerability Mmio stale data:      Mitigation; Clear CPU buffers; SMT vulnerable\nVulnerability Retbleed:             Mitigation; IBRS\nVulnerability Spec rstack overflow: Not affected\nVulnerability Spec store bypass:    Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:           Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:           Mitigation; IBRS; IBPB conditional; STIBP conditional; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                Not affected\nVulnerability Tsx async abort:      Mitigation; Clear CPU buffers; SMT vulnerable\n\nVersions of relevant libraries:\n[pip3] flake8==6.0.0\n[pip3] flashinfer==0.1.6+cu124torch2.4\n[pip3] mypy==1.8.0\n[pip3] mypy-extensions==1.0.0\n[pip3] numpy==1.26.4\n[pip3] numpydoc==1.5.0\n[pip3] onnxruntime==1.20.0\n[pip3] optree==0.11.0\n[pip3] torch==2.4.0\n[pip3] torchaudio==2.3.1\n[pip3] torchvision==0.19.0\n[pip3] triton==3.0.0\n[conda] _anaconda_depends         2024.02             py311_mkl_1  \n[conda] blas                      1.0                         mkl  \n[conda] cudatoolkit               11.3.1               h2bc3f7f_2  \n[conda] ffmpeg                    4.3                  hf484d3e_0    pytorch\n[conda] flashinfer                0.1.6+cu124torch2.4          pypi_0    pypi\n[conda] libjpeg-turbo             2.0.0                h9bf148f_0    pytorch\n[conda] mkl                       2023.1.0         h213fc3f_46344  \n[conda] mkl-service               2.4.0           py311h5eee18b_1  \n[conda] mkl_fft                   1.3.8           py311h5eee18b_0  \n[conda] mkl_random                1.2.4           py311hdb19cb5_0  \n[conda] numpy                     1.26.4          py311h08b1b3b_0  \n[conda] numpy-base                1.26.4          py311hf175353_0  \n[conda] numpydoc                  1.5.0           py311h06a4308_0  \n[conda] optree                    0.11.0                   pypi_0    pypi\n[conda] pytorch-mutex             1.0                         cpu    pytorch\n[conda] torch                     2.4.0                    pypi_0    pypi\n[conda] torchaudio                2.3.1                 py311_cpu    pytorch\n[conda] torchvision               0.19.0                   pypi_0    pypi\n[conda] triton                    3.0.0                    pypi_0    pypi",
+  "transformers_version": "4.45.0",
+  "lm_eval_version": "0.4.9.1",
+  "upper_git_hash": null,
+  "tokenizer_pad_token": [
+    "<|endoftext|>",
+    "151643"
+  ],
+  "tokenizer_eos_token": [
+    "<|im_end|>",
+    "151645"
+  ],
+  "tokenizer_bos_token": [
+    null,
+    "None"
+  ],
+  "eot_token_id": 151645,
+  "max_length": 32768,
+  "task_hashes": {
+    "ifeval": "4180f352080231e1ceeb93d147c58ba5fe4005931897753f7da7bdb179eed394",
+    "aime24": "e01c202bd8197030374a6e83f71d7e2abfb1b0c1c9c3a904843e78eeb8b3d0ee"
+  },
+  "model_source": "hf",
+  "model_name": "Qwen/Qwen2.5-7B-Instruct",
+  "model_name_sanitized": "Qwen__Qwen2.5-7B-Instruct",
+  "system_instruction": null,
+  "system_instruction_sha": null,
+  "fewshot_as_multiturn": false,
+  "chat_template": "{%- if tools %}\n    {{- '<|im_start|>system\\n' }}\n    {%- if messages[0]['role'] == 'system' %}\n        {{- messages[0]['content'] }}\n    {%- else %}\n        {{- 'You are Qwen, created by Alibaba Cloud. You are a helpful assistant.' }}\n    {%- endif %}\n    {{- \"\\n\\n# Tools\\n\\nYou may call one or more functions to assist with the user query.\\n\\nYou are provided with function signatures within <tools></tools> XML tags:\\n<tools>\" }}\n    {%- for tool in tools %}\n        {{- \"\\n\" }}\n        {{- tool | tojson }}\n    {%- endfor %}\n    {{- \"\\n</tools>\\n\\nFor each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:\\n<tool_call>\\n{\\\"name\\\": <function-name>, \\\"arguments\\\": <args-json-object>}\\n</tool_call><|im_end|>\\n\" }}\n{%- else %}\n    {%- if messages[0]['role'] == 'system' %}\n        {{- '<|im_start|>system\\n' + messages[0]['content'] + '<|im_end|>\\n' }}\n    {%- else %}\n        {{- '<|im_start|>system\\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\\n' }}\n    {%- endif %}\n{%- endif %}\n{%- for message in messages %}\n    {%- if (message.role == \"user\") or (message.role == \"system\" and not loop.first) or (message.role == \"assistant\" and not message.tool_calls) %}\n        {{- '<|im_start|>' + message.role + '\\n' + message.content + '<|im_end|>' + '\\n' }}\n    {%- elif message.role == \"assistant\" %}\n        {{- '<|im_start|>' + message.role }}\n        {%- if message.content %}\n            {{- '\\n' + message.content }}\n        {%- endif %}\n        {%- for tool_call in message.tool_calls %}\n            {%- if tool_call.function is defined %}\n                {%- set tool_call = tool_call.function %}\n            {%- endif %}\n            {{- '\\n<tool_call>\\n{\"name\": \"' }}\n            {{- tool_call.name }}\n            {{- '\", \"arguments\": ' }}\n            {{- tool_call.arguments | tojson }}\n            {{- '}\\n</tool_call>' }}\n        {%- endfor %}\n        {{- '<|im_end|>\\n' }}\n    {%- elif message.role == \"tool\" %}\n        {%- if (loop.index0 == 0) or (messages[loop.index0 - 1].role != \"tool\") %}\n            {{- '<|im_start|>user' }}\n        {%- endif %}\n        {{- '\\n<tool_response>\\n' }}\n        {{- message.content }}\n        {{- '\\n</tool_response>' }}\n        {%- if loop.last or (messages[loop.index0 + 1].role != \"tool\") %}\n            {{- '<|im_end|>\\n' }}\n        {%- endif %}\n    {%- endif %}\n{%- endfor %}\n{%- if add_generation_prompt %}\n    {{- '<|im_start|>assistant\\n' }}\n{%- endif %}\n",
+  "chat_template_sha": "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f",
+  "start_time": 15232192.809952294,
+  "end_time": 15233284.427890632,
+  "total_evaluation_time_seconds": "1091.6179383378476"
+}
